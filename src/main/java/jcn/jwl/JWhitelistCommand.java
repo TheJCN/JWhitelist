@@ -86,10 +86,7 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
                     databaseManager.removePlayerFromWhitelist(removePlayerName);
                     sender.sendMessage("Player " + removePlayerName + " removed from whitelist.");
                     Player players_remove = Bukkit.getPlayer(removePlayerName);
-                    if (players_remove != null && players_remove.isOnline())
-                    {
-                        players_remove.kickPlayer("Whitelist remove");
-                    }
+                    if (players_remove != null && players_remove.isOnline()) players_remove.kickPlayer("Whitelist remove");
                 } else {
                     sender.sendMessage("You do not have permission to execute this command.");
                 }
