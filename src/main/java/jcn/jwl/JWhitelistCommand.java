@@ -3,6 +3,8 @@ package jcn.jwl;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
+import org.bukkit.command.defaults.BukkitCommand;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,6 +85,8 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
                 if (sender.hasPermission("jwhitelist.remove") || sender instanceof ConsoleCommandSender) {
                     databaseManager.removePlayerFromWhitelist(removePlayerName);
                     sender.sendMessage("Player " + removePlayerName + " removed from whitelist.");
+                    Player players_remove = Bukkit.getPlayer(removePlayerName);
+                    if (players_remove != null && players_remove.isOnline()) players_remove.kickPlayer("Whitelist remove");
                 } else {
                     sender.sendMessage("You do not have permission to execute this command.");
                 }
