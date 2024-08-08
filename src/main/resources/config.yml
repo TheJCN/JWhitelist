@@ -1,0 +1,15 @@
+database:
+  type: sqlite
+  host: localhost
+  port: 3306
+  name: whitelist
+  user: root
+  password: null
+
+whitelist:
+  check_interval: 5m
+  kick_message: "&4You are not whitelisted on this server."
+  luckperms_enable: true
+  group: player
+
+

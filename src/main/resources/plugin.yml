@@ -1,0 +1,9 @@
+name: JWhitelist
+version: '1.0-SNAPSHOT'
+main: jcn.jwl.JWhitelist
+api-version: '1.21'
+commands:
+  jwhitelist:
+    aliases: jwl
+    description: Manage the whitelist.
+    usage: /jwhitelist add/remove/reload <player> [duration]
