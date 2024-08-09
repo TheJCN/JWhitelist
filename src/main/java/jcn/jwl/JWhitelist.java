@@ -7,12 +7,16 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class JWhitelist extends JavaPlugin {
 
     private JWhitelistDatabase databaseManager;
     private long checkInterval;
     private String kickMessage;
     private String group;
+    private Map<String, String> messages;
 
     @Override
     public void onEnable() {
@@ -23,7 +27,6 @@ public final class JWhitelist extends JavaPlugin {
         loadConfigValues();
 
         getServer().getPluginManager().registerEvents(new JWhitelistListener(this), this);
-
         this.getCommand("jwhitelist").setExecutor(new JWhitelistCommand(this));
 
         startWhitelistCheckTask();
@@ -58,7 +61,12 @@ public final class JWhitelist extends JavaPlugin {
         return group;
     }
 
+    public String getMessage(String key) {
+        return messages.getOrDefault(key, "Message not found");
+    }
+
     public void reloadConfiguration() {
+        reloadConfig();
         getServer().getScheduler().cancelTasks(this);
         loadConfigValues();
         startWhitelistCheckTask();
@@ -70,6 +78,10 @@ public final class JWhitelist extends JavaPlugin {
         checkInterval = parseDuration(getConfig().getString("whitelist.check_interval", "1h"));
         kickMessage = ChatColor.translateAlternateColorCodes('&', getConfig().getString("whitelist.kick_message", "&cYou are not whitelisted on this server."));
         group = getConfig().getString("whitelist.group", "none");
+
+        messages = new HashMap<>();
+        getConfig().getConfigurationSection("messages").getKeys(false).forEach(key ->
+                messages.put(key, ChatColor.translateAlternateColorCodes('&', getConfig().getString("messages." + key))));
     }
 
     private void startWhitelistCheckTask() {
@@ -90,8 +102,7 @@ public final class JWhitelist extends JavaPlugin {
             if (duration.endsWith("min")) {
                 unit = duration.charAt(duration.length() - 3);
                 time = Long.parseLong(duration.substring(0, duration.length() - 3));
-            }
-            else {
+            } else {
                 unit = duration.charAt(duration.length() - 1);
                 time = Long.parseLong(duration.substring(0, duration.length() - 1));
             }

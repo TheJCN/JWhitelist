@@ -30,10 +30,10 @@ public class PreClearEvent implements Listener {
         if (command.equalsIgnoreCase("/jwhitelist confirm") || command.equalsIgnoreCase("/jwl confirm")) {
             event.setCancelled(true);
             executeClear();
-            player.sendMessage("Whitelist cleared successfully.");
+            player.sendMessage(plugin.getMessage("whitelist_cleared"));
         } else if (command.equalsIgnoreCase("/jwhitelist cancel") || command.equalsIgnoreCase("/jwl cancel")) {
             event.setCancelled(true);
-            player.sendMessage("Whitelist clearing canceled.");
+            player.sendMessage(plugin.getMessage("whitelist_clearing_canceled"));
         }
     }
 

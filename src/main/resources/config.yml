@@ -12,4 +12,23 @@ whitelist:
   luckperms_enable: true
   group: player
 
+messages:
+  whitelist_cleared: "&aWhitelist cleared successfully."
+  whitelist_clearing_canceled: "&cWhitelist clearing canceled."
+  no_permission: "&cYou do not have permission to execute this command."
+  reload_success: "&aWhitelist configuration reloaded successfully."
+  player_added: "&aPlayer %player% added to whitelist."
+  player_added_temp: "&aPlayer %player% added to temporary whitelist for %time%."
+  invalid_time_format: "&cInvalid time format. Use format like 5s, 5min, 5h, 5d, 5m"
+  player_removed: "&cPlayer %player% removed from whitelist."
+  no_players_to_remove: "&aNo players need to be removed."
+  players_to_remove_found: "&aFound %count% players to remove."
+  confirm_clear: "&aType /jwhitelist confirm to confirm or /jwhitelist cancel to cancel."
+  whitelist_is_empty: "&aThe whitelist is empty."
+  whitelisted_players: "&aWhitelisted players:"
+  player_kicked: "&cYou have been removed from the whitelist."
+  expired: "expired"
+  expires_never: "expires never"
+  expires_in: "expires in %time%"
+
 
