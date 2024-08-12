@@ -1,7 +1,5 @@
 package jcn.jwl;
 
-import org.bukkit.OfflinePlayer;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +18,7 @@ public class JWhitelistDatabase {
     public void setupDatabase() {
         try {
             String dbType = plugin.getConfig().getString("database.type", "sqlite");
-            if (dbType.equalsIgnoreCase("mysql")) {
+            if ("mysql".equalsIgnoreCase(dbType)) {
                 openMySQLConnection();
             } else {
                 openSQLiteConnection();
@@ -67,11 +65,11 @@ public class JWhitelistDatabase {
         }
     }
 
-    public void addPlayerToWhitelist(OfflinePlayer player, long expiry) {
+    public void addPlayerToWhitelist(String playerName, long expiry) {
         try (PreparedStatement stmt = connection.prepareStatement(
                 "REPLACE INTO whitelist (name, expiry, last_login) VALUES (?, ?, ?)")) {
-            stmt.setString(1, player.getName());
-            stmt.setLong(2, expiry);
+            stmt.setString(1, playerName);
+            stmt.setLong(2, expiry == -1 ? -1 : System.currentTimeMillis() + expiry);
             stmt.setLong(3, System.currentTimeMillis());
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -89,15 +87,13 @@ public class JWhitelistDatabase {
         LuckPermsApi.removePermission(playerName);
     }
 
-    public boolean isPlayerWhitelisted(OfflinePlayer player) {
+    public boolean isPlayerWhitelisted(String playerName) {
         try (PreparedStatement stmt = connection.prepareStatement("SELECT expiry FROM whitelist WHERE name = ?")) {
-            stmt.setString(1, player.getName());
+            stmt.setString(1, playerName);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     long expiry = rs.getLong("expiry");
-                    if (expiry == 0 || expiry > System.currentTimeMillis()) {
-                        return true;
-                    }
+                    return expiry == -1 || expiry > System.currentTimeMillis();
                 }
             }
         } catch (SQLException e) {
@@ -106,11 +102,11 @@ public class JWhitelistDatabase {
         return false;
     }
 
-    public void updateLastLogin(OfflinePlayer player) {
+    public void updateLastLogin(String playerName) {
         try (PreparedStatement stmt = connection.prepareStatement(
                 "UPDATE whitelist SET last_login = ? WHERE name = ?")) {
             stmt.setLong(1, System.currentTimeMillis());
-            stmt.setString(2, player.getName());
+            stmt.setString(2, playerName);
             stmt.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not update last login for player", e);
@@ -119,7 +115,7 @@ public class JWhitelistDatabase {
 
     public void cleanupWhitelist() {
         long currentTime = System.currentTimeMillis();
-        try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM whitelist WHERE expiry != 0 AND expiry <= ?")) {
+        try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM whitelist WHERE expiry != -1 AND expiry <= ?")) {
             stmt.setLong(1, currentTime);
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -155,7 +151,7 @@ public class JWhitelistDatabase {
                 String playerName = rs.getString("name");
                 long expiry = rs.getLong("expiry");
 
-                if (expiry == 0) {
+                if (expiry == -1) {
                     whitelistedPlayers.put(playerName, -1L);
                 } else {
                     long remainingTime = expiry - currentTime;
@@ -172,14 +168,16 @@ public class JWhitelistDatabase {
         return whitelistedPlayers;
     }
 
-    public List<String> getAllPlayerNameInWhitelist(){
+    public List<String> getAllPlayerNameInWhitelist() {
         List<String> whitelistedPlayersName = new ArrayList<>();
         String query = "SELECT name FROM whitelist";
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) whitelistedPlayersName.add(rs.getString("name"));
+            while (rs.next()) {
+                whitelistedPlayersName.add(rs.getString("name"));
+            }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            plugin.getLogger().log(Level.SEVERE, "Could not retrieve all player names from whitelist", e);
         }
         return whitelistedPlayersName;
     }

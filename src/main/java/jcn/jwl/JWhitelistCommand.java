@@ -1,11 +1,13 @@
 package jcn.jwl;
 
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
+import org.bukkit.entity.Player;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class JWhitelistCommand implements CommandExecutor, TabCompleter {
     private final JWhitelistDatabase databaseManager;
@@ -27,10 +29,10 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
         switch (subCommand) {
             case "reload":
                 if (sender.hasPermission("jwhitelist.reload") || sender instanceof ConsoleCommandSender) {
-                    plugin.reloadConfig();
                     plugin.reloadConfiguration();
                     sender.sendMessage(plugin.getMessage("reload_success"));
-                } else {
+                }
+                else {
                     sender.sendMessage(plugin.getMessage("no_permission"));
                 }
                 return true;
@@ -47,7 +49,8 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                     clearWhitelist(sender, clearDuration);
-                } else {
+                }
+                else {
                     sender.sendMessage(plugin.getMessage("no_permission"));
                 }
                 return true;
@@ -57,15 +60,14 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage("Usage: /jwhitelist add <player> [time]");
                     return true;
                 }
-                String playerName = args[1];
-                OfflinePlayer player = Bukkit.getOfflinePlayer(playerName);
                 if (sender.hasPermission("jwhitelist.add") || sender instanceof ConsoleCommandSender) {
+                    String playerName = args[1];
                     long expiry = (args.length == 3) ? parseDuration(args[2]) : -1;
                     if (expiry == -1 && args.length == 3) {
                         sender.sendMessage(plugin.getMessage("invalid_time_format"));
                         return true;
                     }
-                    databaseManager.addPlayerToWhitelist(player, expiry);
+                    databaseManager.addPlayerToWhitelist(playerName, expiry);
                     if (expiry == -1) {
                         sender.sendMessage(plugin.getMessage("player_added").replace("%player%", playerName));
                     } else {
@@ -81,19 +83,74 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage("Usage: /jwhitelist remove <player>");
                     return true;
                 }
-                playerName = args[1];
-                player = Bukkit.getOfflinePlayer(playerName);
                 if (sender.hasPermission("jwhitelist.remove") || sender instanceof ConsoleCommandSender) {
+                    String playerName = args[1];
                     databaseManager.removePlayerFromWhitelist(playerName);
                     sender.sendMessage(plugin.getMessage("player_removed").replace("%player%", playerName));
+                    Player playerOnline = Bukkit.getPlayer(playerName);
+                    if (playerOnline != null && playerOnline.isOnline()) {
+                        playerOnline.kickPlayer(plugin.getMessage("player_kicked"));
+                    }
+                } else {
+                    sender.sendMessage(plugin.getMessage("no_permission"));
+                }
+                return true;
+
+            case "list":
+                if (sender.hasPermission("jwhitelist.list") || sender instanceof ConsoleCommandSender) {
+                    Map<String, Long> whitelistedPlayers = databaseManager.getAllWhitelistedPlayers();
+                    if (whitelistedPlayers.isEmpty()) {
+                        sender.sendMessage(plugin.getMessage("whitelist_is_empty"));
+                    } else {
+                        sender.sendMessage(plugin.getMessage("whitelisted_players"));
+                        for (Map.Entry<String, Long> entry : whitelistedPlayers.entrySet()) {
+                            String name = entry.getKey();
+                            long remain = entry.getValue();
+                            String timeString;
+                            if (remain < -1) {
+                                timeString = plugin.getMessage("expired");
+                            } else if (remain == -1) {
+                                timeString = plugin.getMessage("expires_never");
+                            } else {
+                                timeString = plugin.getMessage("expires_in").replace("%time%", formatDuration(remain));
+                            }
+                            sender.sendMessage("- " + name + " (" + timeString + ")");
+                        }
+                    }
                 } else {
                     sender.sendMessage(plugin.getMessage("no_permission"));
                 }
                 return true;
 
             default:
-                sender.sendMessage("Unknown subcommand: " + subCommand);
+                sender.sendMessage(plugin.getMessage("unknown_subcommand").replace("%subcommand%", subCommand));
                 return false;
+        }
+    }
+
+    private String formatDuration(long durationMillis) {
+        if (durationMillis == -1L) {
+            return "Never expires";
+        } else if (durationMillis <= 0) {
+            return "Expired";
+        }
+
+        long seconds = durationMillis / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+        long months = days / 30;
+
+        if (months > 0) {
+            return months + "m";
+        } else if (days > 0) {
+            return days + "d";
+        } else if (hours > 0) {
+            return hours + "h";
+        } else if (minutes > 0) {
+            return minutes + "min";
+        } else {
+            return seconds + "s";
         }
     }
 
@@ -135,8 +192,13 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("reload", "clear", "add", "remove");
+            return Arrays.asList("add", "remove", "reload", "clear", "list");
+        } else if (args.length == 2){
+            if (args[0].equalsIgnoreCase("add")) return Arrays.asList(sender.getName());
+            else if (args[0].equalsIgnoreCase("remove")) return databaseManager.getAllPlayerNameInWhitelist();
+            return Collections.emptyList();
+        } else {
+            return Collections.emptyList();
         }
-        return null;
     }
 }

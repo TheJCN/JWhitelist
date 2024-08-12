@@ -30,5 +30,6 @@ messages:
   expired: "expired"
   expires_never: "expires never"
   expires_in: "expires in %time%"
+  unknown_subcommand: "Unknown subcommand: %subcommand%"
 
 

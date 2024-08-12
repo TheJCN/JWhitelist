@@ -1,7 +1,5 @@
 package jcn.jwl;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,9 +18,8 @@ public class JWhitelistListener implements Listener {
 
     @EventHandler
     public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-        OfflinePlayer player = Bukkit.getOfflinePlayer(event.getName());
-        if (databaseManager.isPlayerWhitelisted(player)) {
-            databaseManager.updateLastLogin(player);
+        if (databaseManager.isPlayerWhitelisted(event.getName())) {
+            databaseManager.updateLastLogin(event.getName());
         } else {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, plugin.getKickMessage());
         }

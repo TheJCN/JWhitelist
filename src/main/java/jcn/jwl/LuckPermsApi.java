@@ -20,9 +20,14 @@ public class LuckPermsApi {
         String group = plugin.getGroup();
 
         User user = api.getUserManager().getUser(playerName);
-        InheritanceNode node = InheritanceNode.builder(group).build();
-        user.data().remove(node);
-        api.getUserManager().saveUser(user);
+        if (user != null) {
+            InheritanceNode node = InheritanceNode.builder(group).build();
+            user.data().remove(node);
+            api.getUserManager().saveUser(user);
+        }
+        else {
+            plugin.getLogger().severe("LuckyPerms couldn't find the player. Player groups were not modified.");
+        }
     }
 
     public static void addPermission(String playerName) {
@@ -30,8 +35,13 @@ public class LuckPermsApi {
         String group = plugin.getGroup();
 
         User user = api.getUserManager().getUser(playerName);
-        InheritanceNode node = InheritanceNode.builder(group).build();
-        user.data().add(node);
-        api.getUserManager().saveUser(user);
+        if (user != null) {
+            InheritanceNode node = InheritanceNode.builder(group).build();
+            user.data().add(node);
+            api.getUserManager().saveUser(user);
+        }
+        else {
+            plugin.getLogger().severe("LuckyPerms couldn't find the player. Player groups were not modified.");
+        }
     }
 }
