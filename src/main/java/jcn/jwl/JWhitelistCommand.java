@@ -121,6 +121,40 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(plugin.getMessage("no_permission"));
                 }
                 return true;
+            case "info":
+                if (args.length < 2) {
+                    sender.sendMessage("Usage: /jwhitelist info <player>");
+                    return true;
+                }
+                if (sender.hasPermission("jwhitelist.info") || sender instanceof ConsoleCommandSender) {
+                    String playerName = args[1];
+                    long timeLeft = databaseManager.getTimeLeftInWhitelist(playerName);
+                    long lastLogin = databaseManager.getLastLoginTime(playerName);
+
+                    if (timeLeft == -3) {
+                        sender.sendMessage(plugin.getMessage("no_player_info")
+                                .replace("%player%", playerName));
+                    }
+                    else if (timeLeft == -2) {
+                        sender.sendMessage(plugin.getMessage("player_info")
+                                .replace("%player%", playerName)
+                                .replace("%time%", plugin.getMessage("expired"))
+                                .replace("%last_login%", formatDuration(System.currentTimeMillis() - lastLogin)));
+                    } else if (timeLeft == -1) {
+                        sender.sendMessage(plugin.getMessage("player_info")
+                                .replace("%player%", playerName)
+                                .replace("%time%", plugin.getMessage("expires_never"))
+                                .replace("%last_login%", formatDuration(System.currentTimeMillis() - lastLogin)));
+                    } else {
+                        sender.sendMessage(plugin.getMessage("player_info")
+                                .replace("%player%", playerName)
+                                .replace("%time%", formatDuration(timeLeft))
+                                .replace("%last_login%", formatDuration(System.currentTimeMillis() - lastLogin)));
+                    }
+                } else {
+                    sender.sendMessage(plugin.getMessage("no_permission"));
+                }
+                return true;
 
             default:
                 sender.sendMessage(plugin.getMessage("unknown_subcommand").replace("%subcommand%", subCommand));
@@ -192,10 +226,10 @@ public class JWhitelistCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("add", "remove", "reload", "clear", "list");
+            return Arrays.asList("add", "remove", "reload", "clear", "list", "info");
         } else if (args.length == 2){
             if (args[0].equalsIgnoreCase("add")) return Arrays.asList(sender.getName());
-            else if (args[0].equalsIgnoreCase("remove")) return databaseManager.getAllPlayerNameInWhitelist();
+            else if (args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("info")) return databaseManager.getAllPlayerNameInWhitelist();
             return Collections.emptyList();
         } else {
             return Collections.emptyList();

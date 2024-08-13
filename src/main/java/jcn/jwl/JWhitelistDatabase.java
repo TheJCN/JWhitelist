@@ -84,7 +84,7 @@ public class JWhitelistDatabase {
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not remove player from whitelist", e);
         }
-        LuckPermsApi.removePermission(playerName);
+        LuckPermsApi.removeGroupPermission(playerName);
     }
 
     public boolean isPlayerWhitelisted(String playerName) {
@@ -180,5 +180,45 @@ public class JWhitelistDatabase {
             plugin.getLogger().log(Level.SEVERE, "Could not retrieve all player names from whitelist", e);
         }
         return whitelistedPlayersName;
+    }
+
+    public long getTimeLeftInWhitelist(String playerName) {
+        long currentTime = System.currentTimeMillis();
+        long timeLeft = 0;
+
+        String query = "SELECT expiry FROM whitelist WHERE name = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, playerName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    long expiry = rs.getLong("expiry");
+                    if (expiry == -1) timeLeft = -1L;
+                    else if (expiry < -1) timeLeft = -2L;
+                    else timeLeft = expiry - currentTime;
+                }
+                else {
+                    timeLeft = -3L;
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Could not retrieve time left for player in whitelist", e);
+        }
+        return timeLeft;
+    }
+
+    public long getLastLoginTime(String playerName) {
+        long lastLogin = -1;
+        String query = "SELECT last_login FROM whitelist WHERE name = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, playerName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    lastLogin = rs.getLong("last_login");
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Could not retrieve last login time for player", e);
+        }
+        return lastLogin;
     }
 }

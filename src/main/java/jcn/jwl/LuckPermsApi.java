@@ -1,8 +1,11 @@
 package jcn.jwl;
 
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.types.InheritanceNode;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+
+import java.util.UUID;
 
 public class LuckPermsApi {
     private static LuckPerms api;
@@ -15,33 +18,47 @@ public class LuckPermsApi {
         isInit = true;
     }
 
-    public static void removePermission(String playerName){
+    public static void removeGroupPermission(String playerName){
         if (!isInit) return;
         String group = plugin.getGroup();
 
-        User user = api.getUserManager().getUser(playerName);
-        if (user != null) {
-            InheritanceNode node = InheritanceNode.builder(group).build();
-            user.data().remove(node);
-            api.getUserManager().saveUser(user);
-        }
-        else {
-            plugin.getLogger().severe("LuckyPerms couldn't find the player. Player groups were not modified.");
-        }
+        OfflinePlayer player = Bukkit.getOfflinePlayer(playerName);
+        UUID playerUUID = player.getUniqueId();
+
+        api.getUserManager().loadUser(playerUUID).thenAcceptAsync(user -> {
+            if (user != null) {
+                System.out.println(user.getUsername());
+                InheritanceNode node = InheritanceNode.builder(group).build();
+                user.data().remove(node);
+                api.getUserManager().saveUser(user);
+            } else {
+                plugin.getLogger().severe("Error: User not found.");
+            }
+        }).exceptionally(ex -> {
+            plugin.getLogger().severe("Error loading user: " + ex.getMessage());
+            return null;
+        });
     }
 
-    public static void addPermission(String playerName) {
+    public static void addGroupPermission(String playerName) {
         if (!isInit) return;
         String group = plugin.getGroup();
 
-        User user = api.getUserManager().getUser(playerName);
-        if (user != null) {
-            InheritanceNode node = InheritanceNode.builder(group).build();
-            user.data().add(node);
-            api.getUserManager().saveUser(user);
-        }
-        else {
-            plugin.getLogger().severe("LuckyPerms couldn't find the player. Player groups were not modified.");
-        }
+        OfflinePlayer player = Bukkit.getOfflinePlayer(playerName);
+        UUID playerUUID = player.getUniqueId();
+
+        api.getUserManager().loadUser(playerUUID).thenAcceptAsync(user -> {
+            if (user != null) {
+                System.out.println(user.getUsername());
+                InheritanceNode node = InheritanceNode.builder(group).build();
+                user.data().add(node);
+                api.getUserManager().saveUser(user);
+            } else {
+                plugin.getLogger().severe("Error: User not found.");
+            }
+        }).exceptionally(ex -> {
+            plugin.getLogger().severe("Error loading user: " + ex.getMessage());
+            return null;
+        });
     }
 }

@@ -28,8 +28,8 @@ public class JWhitelistListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
-        if (!player.hasPlayedBefore()) {
-            LuckPermsApi.addPermission(player.getName());
+        if (!player.hasPlayedBefore() || !player.hasPermission("group." + plugin.getGroup())) {
+            LuckPermsApi.addGroupPermission(player.getName());
         }
     }
 }
